@@ -1,0 +1,83 @@
+vDataJSON["mapobject"] = {
+  "type": "object",
+  "title": "SDG Record",
+  "headerTemplate": "SDG: {{ self.title4map}}",
+  "properties": {
+    "title4map": {
+      "type": "string",
+      "title": "Title for Map Icon",
+      "default": "My Location SDG Title"
+    },
+    "geolocation": {
+      "title": "Geolocation:",
+      "type": "string",
+    },
+    "url": {
+      "title": "URL:",
+      "type": "string",
+    },
+    "SDG": {
+      "title": "List SDG",
+      "type":"array",
+      "format":"tabs",
+      "uniqueItems": false,
+      "items":{
+        "title":"Sustainable Development Goal",
+        "headerTemplate": "SDG {{ self }}",
+        "type": "string",
+        "enum": [
+          "1",
+          "2",
+          "3",
+          "4",
+          "5",
+          "6",
+          "7",
+          "8",
+          "9",
+          "10",
+          "11",
+          "12",
+          "13",
+          "14",
+          "15",
+          "16",
+          "17"
+        ],
+        "options": {
+          "enum_titles": [
+            "Goal 1: No Poverty",
+            "Goal 2: Zero Hunger",
+            "Goal 3: Good Health and Well-being",
+            "Goal 4: Quality Education",
+            "Goal 5: Gender Equality",
+            "Goal 6: Clean Water and Sanitation",
+            "Goal 7: Affordable and Clean Energy",
+            "Goal 8: Decent Work and Economic Growth",
+            "Goal 9: Industry, Innovation and Infrastructure",
+            "Goal 10: Reduced Inequalities",
+            "Goal 11: Sustainable Cities and Communities",
+            "Goal 12: Responsible Consumption and Production",
+            "Goal 13: Climate Action",
+            "Goal 14: Life Below Water",
+            "Goal 15: Life on Land",
+            "Goal 16: Peace, Justice and Strong Institutions",
+            "Goal 17: Partnerships for the Goals"
+          ]
+        }
+      }
+    },
+    "date": {
+      "title": "Created Date/Time:",
+      "type": "string",
+    },
+    "comment" : {
+      "title":"Comment/Abstract for Location",
+      "type":"string",
+      "format":"textaera",
+      "default": "comment about the SDG at geolocation"
+    }
+  },
+  "definitions": {
+  }
+}

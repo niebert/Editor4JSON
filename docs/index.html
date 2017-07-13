@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>JSON Editor for JSCC</title>
+    <!--
+      Link Parameter (optional):
+       "schema" is a string defining the schema (stringified JSON)
+       "json" is a
+
+  -->
+    <link href="jquery/jquery-ui.css" rel="stylesheet">
+    <!-- Bootstrap Core CSS -->
+     <link href="css/bootstrap.min.css" rel="stylesheet">
+     <!-- Font-Awesome CSS -->
+     <link href="css/font-awesome.min.css" rel="stylesheet">
+
+     <script src="ace/src-noconflict/ace.js" type="text/javascript" charset="utf-8"></script>
+     <script src="jquery/external/jquery/jquery.js" type="text/javascript"></script>
+     <script src="js/arrayhash.js"></script>
+     <script src="js/lodash.js"></script>
+     <script src="js/filesaver.js"></script>
+     <script src="js/linkparam.js"></script>
+     <script src="js/string.js"></script>
+     <script src="js/jsoneditor.js"></script>
+     <script src="js/editor4json.js"></script>
+     <script src="js/predbedit.js"></script>
+     <script src="js/writedom.js"></script>
+     <script>
+     var vDataJSON = {};
+     var vSchemaID =  "mapobject"; // file defined in schema/mapobject.schema
+     // Set the default CSS theme and icon library globally
+     JSONEditor.defaults.theme = 'bootstrap3';
+     JSONEditor.defaults.iconlib = 'fontawesome4';
+     JSONEditor.plugins.ace.theme = 'xcode';
+
+
+    </script>
+   <!-- BEGIN: load JSON data -->
+    <script src="db/data.js"></script>
+    <!-- END:  load JSON data -->
+    <!-- BEGIN: load JSON schema -->
+    <script src="schema/mapobject.schema"></script>
+    <!-- END:  load JSON schema -->
+    <script>
+    </script>
+ </head>
+  <body style="margin:20px">
+    <!-- this is hidden input file div to manage a file upload of a JSON into the browser -->
+    <div data-role="fieldcontain" style="display:none">
+         <input type="file" id="fileJSON" name="fileJSON" value="Select JSON File" id="fileJSON" onchange="vEditor4JSON.load(this.id)"/>
+    </div>
+
+  	<div id="divNavigate"  align="center">
+    <!-- the button vOpenJSON generates an onclick event for the fileJSON input file element in the DOM -->
+ 	 	<button id='bOpenJSON' style="color: white;background-color: #225988"  onclick="$( '#fileJSON' ).trigger('click');return false">
+			<i class="fa fa-folder-open-o" aria-hidden="true"></i> Load
+		</button>
+		<button id='bSaveJSON' style="color: white;background-color: #225988"  onclick="vEditor4JSON.save();return false">
+			<i class="fa fa-floppy-o" aria-hidden="true"></i> Save
+		</button>
+    &nbsp;
+		&nbsp;
+
+		<button id='bFastBackward' onclick="vEditor4JSON.first();return false">
+			<i class="fa fa-fast-backward" aria-hidden="true"></i>
+		</button>
+		<button id='bStepBackward' onclick="vEditor4JSON.prev();return false">
+			<i class="fa fa-step-backward" aria-hidden="true"></i>
+		</button>
+		<input type="text" id="array_index" value="0" size="2" onchange="vEditor4JSON.goto(this.value);return false">
+		/<label id="array_length">0</label>
+		<button id='bStepForward'  onclick="vEditor4JSON.next();return false">
+			<i class="fa fa-step-forward" aria-hidden="true"></i>
+		</button>
+	   <button id='bFastForward' onclick="vEditor4JSON.last();return false">
+			<i class="fa fa-fast-forward" aria-hidden="true"></i>
+		</button>
+		&nbsp;
+		&nbsp;
+		<button id='bAddRecord' style="color: white;background-color: #225988"  onclick="vEditor4JSON.add();return false">
+			<i class="fa fa-plus-square" aria-hidden="true"></i> Add
+		</button>
+		<button id='bDeleteRecord' style="color: white;background-color: #c10303"  onclick="vEditor4JSON.deleteAsk();return false">
+			<i class="fa fa-minus-square" aria-hidden="true"></i> Delete
+		</button>
+    <i id='valid_indicator' style="width:50px">valid or not valid</i>
+    <div class="text" id="load_filename"></div>
+    <hr>
+	</div>
+
+    <div id='editor_holder' style="margin-right: 30px; margin-left: 30px"></div>
+    <div id='button_holder' style="margin:20px">
+      <button id='bExportJSON' onclick="vEditor4JSON.exportData()" style="display:none">Export JSON</button>
+      <button id='bExportSchema' onclick="vEditor4JSON.exportSchema()">Export JSON Schema</button>
+      <button id='bWinClose' onclick="window.close()" style="color: white;background-color: #225988;display:none">Close</button>
+      <button id='bExportEditorContent'  style="display:none">Export Editor innerHTML - Debug</button>
+      <button id='view' onclick="console.log(JSON.stringify(editor.getValue()))" style="display:none">View (console.log)</button>
+    </div>
+    <script>
+      //-------------------------------------------------------
+      // SCHEMA: Initialize the editor with a default JSON schema
+      // other keys for a pre-loads schema (see script-tags "load JSON schema" above):
+      //  "classlist", "class", "globallibs", "elementdb", "databaseschema", ...
+      var vSchemaDefined = false;
+      var vDefaultID = vSchemaID; // save the default SchemaID
+      var vSchemaJSON = vDataJSON[vSchemaID];
+      var vInitData = {}; // init record
+      //-------------------------------------------------------
+      // LINK PARAMETER: Evaluation link parameter in JSON Path
+      var vLinkParam = new LinkParam();
+      vLinkParam.init(document);
+      if (vLinkParam.exists("schemaid")) {
+        vSchemaID = vLinkParam.getValue("schemaid");
+        if (vDataJSON.hasOwnProperty(vSchemaID)) {
+          vSchemaJSON = vDataJSON[vSchemaID];
+          vSchemaDefined = true;
+        }
+      };
+      if (vLinkParam.exists("schema")) {
+        vSchemaString = vLinkParam.getValue("schema");
+        try {
+          vSchemaJSON = JSON.parse(vSchemaString);
+          console.log("Loaded Schema via LinkParameter for SchemaID='"+vSchemaID+"'");
+          vSchemaDefined = true;
+        } catch (e) {
+          alert(e);
+        };
+      };
+      //-------------------------------------------------------
+      // InitJSON: Get the JSON data to init the Editor from Window Opener
+      var vDOMID = {
+        "name" : vSchemaID,
+        "editor" : "editor_holder", //DIV element in which the JSON editor is injected
+        "validate" : "valid_indicator", // DIV Element that shows "valid" or "not valid"
+        "current" :  "array_index",
+        "length" : "array_length"
+      };
+      //-------------------------------------------------------
+      //---- Create JSON Editor -------------------------------
+      //-------------------------------------------------------
+      var vEditor4JSON = new Editor4JSON();
+      var vInitData = vDataJSON["data"];
+      vEditor4JSON.init(vDOMID,vInitData,vSchemaJSON);
+      var editor = vEditor4JSON.aEditor;
+      //-------------------------------------------------------
+      //---JSON EDITOR Handle Change Event---------------------
+      //-------------------------------------------------------
+      // Hook up the submit button to log to the console
+      document.getElementById('bExportEditorContent').addEventListener('click',function() {
+        var vContent = style_html(getEditorInnerHTML("editor_holder"));
+        // Get the value from the editor
+        saveFile2HDD("editor_innerhtml.html",vContent);
+        //console.log(editor.getValue());
+      });
+    </script>
+    <script src="js/datetime4json.js"></script>
+  </body>
+</html>

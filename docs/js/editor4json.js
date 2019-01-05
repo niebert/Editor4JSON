@@ -10,7 +10,7 @@
 //# GNU Public License V3 - OpenSource
 //#
 //# created with JavaScript Class Creator JSCC
-//#     https://niebert.github.io/JavascriptClassGenerator
+//#     https://niebert.github.io/ClassEditorUML
 //#################################################################
 
 //---------------------------------------------------------------------
